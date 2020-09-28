@@ -24,12 +24,12 @@ name (assuming the first line in csv file contains "# colname1, colname2,
 
 
 So, for example, to join 2 CSV files that contain the same value in the
-"`id`" column, and output one column from each file, and the sum of 2
+"`city`" column, and output one column from each file, and the sum of 2
 colums, we would use:
 
 ```
-# ./csvjoin.py -i file0.csv -i file1.csv --join 0:id 1:id -o out.csv \
-    --out-col 0:city --out-col 1.bar --out-col "0:foo + 1:bar"
+# ./csvjoin.py -i file0.csv -i file1.csv --join 0:city 1:city -o out.csv \
+    --out-col 0:city --out-col 1:bar --out-col "0:foo + 1:bar"
 ```
 
 """
