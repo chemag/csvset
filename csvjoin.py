@@ -110,17 +110,12 @@ class Expression(object):
 
 def read_data(infile):
     # open infile
-    if infile != sys.stdin:
-        try:
-            fin = open(infile, 'rb+')
-        except IOError:
-            print('Error: cannot open file "%s":', infile)
-    else:
-        fin = sys.stdin.buffer
-
-    # read data
-    raw_data = fin.read()
-    return raw_data.decode('ascii')
+    if infile == '-':
+        infile = '/dev/fd/0'
+    with open(infile, 'r') as fin:
+        # read data
+        raw_data = fin.read()
+    return raw_data
 
 
 def parse_csv(raw_data, sep):
@@ -256,7 +251,7 @@ def main(argv):
 
     # get infile(s)/outfile
     if options.outfile == '-':
-        options.outfile = sys.stdout
+        options.outfile = '/dev/fd/1'
 
     # print results
     if options.debug > 0:
@@ -284,21 +279,12 @@ def main(argv):
         expr_list.append(Expression(colname, colnames_list))
 
     # open outfile
-    if options.outfile != sys.stdout:
-        try:
-            fout = open(options.outfile, 'w+')
-        except IOError:
-            print('Error: cannot open file "%s":', options.outfile)
-    else:
-        fout = sys.stdout.buffer
-
-    # run all the matches
-    for row_list in match_list:
-        lines = list(l[i] for i, l in zip(row_list, lines_list))
-        out_cols = [expr.run(lines) for expr in expr_list]
-        fout.write(','.join(out_cols) + '\n')
-
-    fout.close()
+    with open(options.outfile, 'w') as fout:
+        # run all the matches
+        for row_list in match_list:
+            lines = list(l[i] for i, l in zip(row_list, lines_list))
+            out_cols = [expr.run(lines) for expr in expr_list]
+            fout.write(','.join(out_cols) + '\n')
 
 
 if __name__ == '__main__':

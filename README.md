@@ -1,6 +1,6 @@
 # csvjoin: a CSV joiner
 
-`csvjoin` is a CLI tool runs through 2+ CSV input files, joins them (using a column in each of the input files), and produces a new CSV file composed of elements of the input files, including operations on them. 
+`csvjoin` is a CLI tool runs through 2+ CSV input files, joins them (using a column in each of the input files), and produces a new CSV file composed of elements of the input files, including operations on them.
 
 
 # Example
@@ -8,14 +8,14 @@
 We have 2 files, named `file0.csv` and `file1.csv`, which contain
 
 ```
-$ cat file0.csv 
+$ cat file0.csv
 # city, data, tmax, tmin, foo
 Austin, 20140916, 111, 0, 1
 Berkeley, 20140916, 222, 0, 2
 Duke, 20140916, 444, 0, 3
 Eaton, 20140916, 555, 0, 4
 
-$ cat file1.csv 
+$ cat file1.csv
 # city, i1, i2, bar
 Austin, 1, 11, 100
 Berkeley, 2, 22, 200
@@ -54,7 +54,7 @@ Second, we provide a list of the output columns in the output file, and the outp
 The final results will be:
 
 ```
-$ cat out.csv 
+$ cat out.csv
 Austin,100,101
 Berkeley,200,202
 Duke,400,403
@@ -72,8 +72,8 @@ We could also do:
 
 ```
 $ ./csvjoin.py -i file0.csv -i file1.csv \
-    --join 0:city 1:city 
-    --out-col 0:city --out-col 1:bar --out-col "0:foo + 1:bar + 1000000" 
+    --join 0:city 1:city
+    --out-col 0:city --out-col 1:bar --out-col "0:foo + 1:bar + 1000000"
     -o out.csv
 
 $ cat out.csv
