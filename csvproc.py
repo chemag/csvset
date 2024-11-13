@@ -7,6 +7,7 @@ import ast
 import argparse
 import operator
 import pandas as pd
+import re
 import sys
 
 
@@ -39,7 +40,8 @@ def eval_expr(expr, variables):
     :param variables: A dictionary of variable values.
     :return: The result of the evaluated expression.
     """
-    # Parse the expression into an AST
+
+    # parse the expression into an AST
     node = ast.parse(expr, mode="eval").body
 
     def _eval(node):
@@ -64,12 +66,22 @@ def add_column(infile, column_name, equation, outfile, header):
     # parse equation
     assert equation is not None, "error: need a valid equation"
 
+    # look for variables referring to column numbers ("$<n>$) and
+    # replace them with "column_<n>".
+    def replacer(match):
+        index = int(match.group(1)) - 1
+        return f"column_{match.groups()[0]}"
+
+    equation = re.sub(r"\$(\d+)", replacer, equation)
+    num_cols = df.shape[1]
     # create a new column
     for tup in df.itertuples():
-        new_value = eval_expr(equation, tup._asdict())
+        variables = tup._asdict()
+        for i in range(num_cols + 1):
+            variables[f"column_{i}"] = tup[i]
+        new_value = eval_expr(equation, variables)
         index = tup[0]
         df.loc[index, column_name] = new_value
-
     # write csv
     df.to_csv(outfile, header=header, index=False)
 
