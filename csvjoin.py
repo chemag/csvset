@@ -40,31 +40,31 @@ import re
 import sys
 
 
-__version__ = '0.1'
+__version__ = "0.1"
 
-YSCALE_VALUES = ('linear', 'log', 'symlog', 'logit')
+YSCALE_VALUES = ("linear", "log", "symlog", "logit")
 
 default_values = {
-    'debug': 0,
-    'sep': ',',
-    'join': None,
-    'out_cols': [],
-    'infile': [],
-    'outfile': None,
+    "debug": 0,
+    "sep": ",",
+    "join": None,
+    "out_cols": [],
+    "infile": [],
+    "outfile": None,
 }
 
 
-COLUMN_NAME_RE = r'\d+\:[\w\d_]+'
+COLUMN_NAME_RE = r"\d+\:[\w\d_]+"
 
 
 def is_column_name(colname):
     # ensure end-to-end match
-    column_name_re = r'^%s$' % COLUMN_NAME_RE
+    column_name_re = r"^%s$" % COLUMN_NAME_RE
     return re.match(column_name_re, colname) is not None
 
 
 def parse_column_name(colname, colnames_list):
-    i, field = colname.split(':')
+    i, field = colname.split(":")
     i = int(i)
     return i, colnames_list[i].index(field)
 
@@ -74,11 +74,11 @@ class Expression(object):
     def __init__(self, colname, colnames_list):
         if is_column_name(colname):
             # column cointains a simple value
-            self.expr_ = ''
+            self.expr_ = ""
             try:
                 self.pars_ = parse_column_name(colname, colnames_list)
             except ValueError:
-                raise Exception('error: unknown column name (%s)' % colname)
+                raise Exception("error: unknown column name (%s)" % colname)
         else:
             # column cointains an expression
             self.pars_ = []
@@ -88,14 +88,12 @@ class Expression(object):
                 pos_list.append(match.span())
                 # parse the column name
                 try:
-                    self.pars_.append(parse_column_name(match.group(),
-                                                        colnames_list))
+                    self.pars_.append(parse_column_name(match.group(), colnames_list))
                 except ValueError:
-                    raise Exception('error: unknown column name (%s)' %
-                                    match.group())
+                    raise Exception("error: unknown column name (%s)" % match.group())
             # fix the positions
-            for (i, j) in reversed(pos_list):
-                colname = colname[:i] + '{}' + colname[j:]
+            for i, j in reversed(pos_list):
+                colname = colname[:i] + "{}" + colname[j:]
             self.expr_ = colname
 
     def run(self, lines):
@@ -110,9 +108,9 @@ class Expression(object):
 
 def read_data(infile):
     # open infile
-    if infile == '-':
-        infile = '/dev/fd/0'
-    with open(infile, 'r') as fin:
+    if infile == "-":
+        infile = "/dev/fd/0"
+    with open(infile, "r") as fin:
         # read data
         raw_data = fin.read()
     return raw_data
@@ -120,16 +118,17 @@ def read_data(infile):
 
 def parse_csv(raw_data, sep):
     # split the input in lines
-    lines = raw_data.split('\n')
+    lines = raw_data.split("\n")
     # look for named columns in line 0
     column_names = []
-    if lines[0].strip().startswith('#'):
+    if lines[0].strip().startswith("#"):
         column_names = lines[0].strip()[1:].strip().split(sep)
         # remove spaces
         column_names = [colname.strip() for colname in column_names]
     # remove comment lines
-    lines = [line.split(sep) for line in lines if line and
-             not line.strip().startswith('#')]
+    lines = [
+        line.split(sep) for line in lines if line and not line.strip().startswith("#")
+    ]
     # strip spaces from items
     lines = [[item.strip() for item in line] for line in lines]
     return column_names, lines
@@ -139,8 +138,9 @@ def get_field_list(infile_list, join_list, colnames_list):
     # check the length of the join fields is equal to the number of input files
     numfiles = len(infile_list)
     assert numfiles == len(join_list), (
-        'join list must contain 1 entry per input files (%i) -- instead it '
-        'contains %i' % (numfiles, len(join_list)))
+        "join list must contain 1 entry per input files (%i) -- instead it "
+        "contains %i" % (numfiles, len(join_list))
+    )
 
     # get the list of join fields
     join_columns = {}
@@ -148,13 +148,15 @@ def get_field_list(infile_list, join_list, colnames_list):
         try:
             i, join_columns[i] = parse_column_name(join, colnames_list)
         except ValueError:
-            raise Exception('error: unknown column name (%s)' % join)
+            raise Exception("error: unknown column name (%s)" % join)
 
     # make sure they field keys cover the input file range
-    assert set(range(numfiles)) == {k for k, v in join_columns.items()}, (
-        'join list must contain entries for each of the input files '
-        '(%r != %r)' % (set(range(numfiles)),
-                        {k for k, v in join_columns.items()}))
+    assert set(range(numfiles)) == {
+        k for k, v in join_columns.items()
+    }, "join list must contain entries for each of the input files " "(%r != %r)" % (
+        set(range(numfiles)),
+        {k for k, v in join_columns.items()},
+    )
 
     # deco-sort the join fields dictionary by the keys
     item_list = list(join_columns.items())
@@ -179,8 +181,8 @@ def get_match_list(lines_list, join_field_list):
 
     def no_finished_list(ii, lines_list):
         return functools.reduce(
-            bool.__and__,
-            [(ii[i] < len(lines_list[i])) for i in range(len(ii))])
+            bool.__and__, [(ii[i] < len(lines_list[i])) for i in range(len(ii))]
+        )
 
     while no_finished_list(ii, lines_list):
         match = []
@@ -207,39 +209,71 @@ def get_match_list(lines_list, join_field_list):
         match_list.append(match)
         # update counters
         ii = match
-        ii = [i+1 for i in ii]
+        ii = [i + 1 for i in ii]
     return match_list
 
 
 def get_options(argv):
     # parse opts
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-d', '--debug', action='count',
-                        dest='debug', default=default_values['debug'],
-                        help='Increase verbosity (multiple times for more)',)
-    parser.add_argument('--quiet', action='store_const',
-                        dest='debug', const=-1,
-                        help='Zero verbosity',)
-    parser.add_argument('--sep', action='store', type=str,
-                        dest='sep', default=default_values['sep'],
-                        metavar='SEP',
-                        help='use SEP as separator',)
-    parser.add_argument('--join', action='store', type=str, nargs='+',
-                        dest='join', default=default_values['join'],
-                        metavar='JOIN',
-                        help='use JOIN as join field list',)
-    parser.add_argument('--out-col', action='append',
-                        dest='out_cols', default=default_values['out_cols'],
-                        metavar='out-col',
-                        help='output column(s)',)
-    parser.add_argument('-i', '--infile', action='append',
-                        default=default_values['infile'],
-                        metavar='input-file',
-                        help='input file(s)',)
-    parser.add_argument('-o', type=str,
-                        dest='outfile', default=default_values['outfile'],
-                        metavar='output-file',
-                        help='output file',)
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="count",
+        dest="debug",
+        default=default_values["debug"],
+        help="Increase verbosity (multiple times for more)",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_const",
+        dest="debug",
+        const=-1,
+        help="Zero verbosity",
+    )
+    parser.add_argument(
+        "--sep",
+        action="store",
+        type=str,
+        dest="sep",
+        default=default_values["sep"],
+        metavar="SEP",
+        help="use SEP as separator",
+    )
+    parser.add_argument(
+        "--join",
+        action="store",
+        type=str,
+        nargs="+",
+        dest="join",
+        default=default_values["join"],
+        metavar="JOIN",
+        help="use JOIN as join field list",
+    )
+    parser.add_argument(
+        "--out-col",
+        action="append",
+        dest="out_cols",
+        default=default_values["out_cols"],
+        metavar="out-col",
+        help="output column(s)",
+    )
+    parser.add_argument(
+        "-i",
+        "--infile",
+        action="append",
+        default=default_values["infile"],
+        metavar="input-file",
+        help="input file(s)",
+    )
+    parser.add_argument(
+        "-o",
+        type=str,
+        dest="outfile",
+        default=default_values["outfile"],
+        metavar="output-file",
+        help="output file",
+    )
     # do the parsing
     options = parser.parse_args(argv[1:])
     return options
@@ -250,8 +284,8 @@ def main(argv):
     options = get_options(argv)
 
     # get infile(s)/outfile
-    if options.outfile == '-':
-        options.outfile = '/dev/fd/1'
+    if options.outfile == "-":
+        options.outfile = "/dev/fd/1"
 
     # print results
     if options.debug > 0:
@@ -267,8 +301,7 @@ def main(argv):
         lines_list.append(lines)
 
     # get a sorted field list for the join
-    join_field_list = get_field_list(options.infile, options.join,
-                                     colnames_list)
+    join_field_list = get_field_list(options.infile, options.join, colnames_list)
 
     # get a list of matches
     match_list = get_match_list(lines_list, join_field_list)
@@ -279,14 +312,14 @@ def main(argv):
         expr_list.append(Expression(colname, colnames_list))
 
     # open outfile
-    with open(options.outfile, 'w') as fout:
+    with open(options.outfile, "w") as fout:
         # run all the matches
         for row_list in match_list:
             lines = list(l[i] for i, l in zip(row_list, lines_list))
             out_cols = [expr.run(lines) for expr in expr_list]
-            fout.write(','.join(out_cols) + '\n')
+            fout.write(",".join(out_cols) + "\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # at least the CLI program name: (CLI) execution
     main(sys.argv)
