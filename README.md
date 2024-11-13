@@ -1,4 +1,9 @@
-# csvjoin: a CSV joiner
+# csvset: a set of CSV tools
+
+This repo contains a set of CSV tools, including csvjoin and csvtranspose.
+
+
+# 1. csvjoin: a CSV joiner
 
 `csvjoin` is a CLI tool runs through 2+ CSV input files, joins them (using a column in each of the input files), and produces a new CSV file composed of elements of the input files, including operations on them.
 
